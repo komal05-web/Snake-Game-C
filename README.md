@@ -7,4 +7,4 @@ cd Snake-Game-C
 2. Compile the Game (using GCC)Use the GCC compiler to build the executable.A. For Console/Terminal Version (e.g., using ncurses or simple I/O)# Example command (adjust for your specific libraries/source files)
 gcc -o snake *.c -lncurses 
 3. Run the GameOnce compiled, execute the program:./snake
-LicenseThis project is licensed under the MIT License.
+**License :** This project is licensed under the MIT License.
