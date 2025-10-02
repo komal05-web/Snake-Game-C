@@ -4,18 +4,19 @@
 #include <windows.h>
 #include <time.h>
 
-#define HEIGHT 20
 #define WIDTH 60
-#define MAX_TAIL 1000
+#define HEIGHT 20
 
-enum Direction { UP, DOWN, LEFT, RIGHT, STOP };
-enum Direction dir;
+typedef struct SnakeSegment {
+    int x, y;
+    struct SnakeSegment* next;
+} SnakeSegment;
 
-int Score = 0;
+SnakeSegment* head = NULL;
 int fruit_x, fruit_y;
-int head_x, head_y;
-int tail_x[MAX_TAIL], tail_y[MAX_TAIL];
-int tail_length = 0;
+int score = 0;
+enum Direction { UP, DOWN, LEFT, RIGHT, STOP };
+enum Direction dir = STOP;
 
 CHAR_INFO buffer[(HEIGHT + 2) * (WIDTH + 2)];
 COORD bufferSize = { WIDTH + 2, HEIGHT + 2 };
@@ -24,26 +25,28 @@ SMALL_RECT writeRegion = { 0, 0, WIDTH + 1, HEIGHT + 1 };
 
 void setup();
 void draw();
-void game_loop();
 void input();
+void update();
+void add_head(int x, int y);
+void remove_tail();
+int check_collision(int x, int y);
 
 int main() {
     srand(time(NULL));
     setup();
 
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTitle("Snake Game");
+    SetConsoleTitle("Snake Game with Linked List");
 
     while (1) {
         input();
-        game_loop();
+        update();
         draw();
         WriteConsoleOutput(hConsole, buffer, bufferSize, bufferCoord, &writeRegion);
 
-        // Print score and controls below the game area
         COORD infoPos = { 0, HEIGHT + 2 };
         SetConsoleCursorPosition(hConsole, infoPos);
-        printf("Score: %d\tControls: W A S D | X = Stop\n", Score);
+        printf("Score: %d\tControls: W A S D | X = Stop\n", score);
 
         Sleep(100);
     }
@@ -52,54 +55,37 @@ int main() {
 }
 
 void setup() {
-    head_x = WIDTH / 2;
-    head_y = HEIGHT / 2;
+    add_head(WIDTH / 2, HEIGHT / 2);
     fruit_x = rand() % WIDTH;
     fruit_y = rand() % HEIGHT;
-    dir = STOP;
-    tail_length = 0;
 }
 
-void draw() {
-    for (int i = 0; i < HEIGHT + 2; i++) {
-        for (int j = 0; j < WIDTH + 2; j++) {
-            int index = i * (WIDTH + 2) + j;
-            buffer[index].Char.AsciiChar = ' ';
-            buffer[index].Attributes = FOREGROUND_GREEN;
+void add_head(int x, int y) {
+    SnakeSegment* newSegment = (SnakeSegment*)malloc(sizeof(SnakeSegment));
+    newSegment->x = x;
+    newSegment->y = y;
+    newSegment->next = head;
+    head = newSegment;
+}
 
-            // Borders
-            if (i == 0 || i == HEIGHT + 1 || j == 0 || j == WIDTH + 1) {
-                buffer[index].Char.AsciiChar = '#';
-                buffer[index].Attributes = FOREGROUND_RED | FOREGROUND_INTENSITY;
-            }
-            // Fruit
-            else if (i - 1 == fruit_y && j - 1 == fruit_x) {
-                buffer[index].Char.AsciiChar = 'F';
-                buffer[index].Attributes = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
-            }
-            // Snake head
-            else if (i - 1 == head_y && j - 1 == head_x) {
-                buffer[index].Char.AsciiChar = 'O';
-                buffer[index].Attributes = FOREGROUND_BLUE | FOREGROUND_INTENSITY;
-            }
-            // Snake tail
-            else {
-                int isTail = 0;
-                for (int k = 0; k < tail_length; k++) {
-                    if (i - 1 == tail_y[k] && j - 1 == tail_x[k]) {
-                        buffer[index].Char.AsciiChar = 'o';
-                        buffer[index].Attributes = FOREGROUND_BLUE;
-                        isTail = 1;
-                        break;
-                    }
-                }
-                if (!isTail) {
-                    buffer[index].Char.AsciiChar = ' ';
-                    buffer[index].Attributes = FOREGROUND_GREEN;
-                }
-            }
-        }
+void remove_tail() {
+    if (!head || !head->next) return;
+
+    SnakeSegment* current = head;
+    while (current->next->next) {
+        current = current->next;
     }
+    free(current->next);
+    current->next = NULL;
+}
+
+int check_collision(int x, int y) {
+    SnakeSegment* current = head->next;
+    while (current) {
+        if (current->x == x && current->y == y) return 1;
+        current = current->next;
+    }
+    return 0;
 }
 
 void input() {
@@ -115,37 +101,72 @@ void input() {
     }
 }
 
-void game_loop() {
-    // Move tail
-    for (int i = tail_length - 1; i > 0; i--) {
-        tail_x[i] = tail_x[i - 1];
-        tail_y[i] = tail_y[i - 1];
-    }
-    if (tail_length > 0) {
-        tail_x[0] = head_x;
-        tail_y[0] = head_y;
-    }
+void update() {
+    if (!head) return;
 
-    // Move head
+    int new_x = head->x;
+    int new_y = head->y;
+
     switch (dir) {
-        case UP: head_y--; break;
-        case DOWN: head_y++; break;
-        case LEFT: head_x--; break;
-        case RIGHT: head_x++; break;
-        case STOP: break;
+        case UP: new_y--; break;
+        case DOWN: new_y++; break;
+        case LEFT: new_x--; break;
+        case RIGHT: new_x++; break;
+        case STOP: return;
     }
 
-    // Wrap around
-    if (head_x < 0) head_x = WIDTH - 1;
-    else if (head_x >= WIDTH) head_x = 0;
-    if (head_y < 0) head_y = HEIGHT - 1;
-    else if (head_y >= HEIGHT) head_y = 0;
+    if (new_x < 0) new_x = WIDTH - 1;
+    else if (new_x >= WIDTH) new_x = 0;
+    if (new_y < 0) new_y = HEIGHT - 1;
+    else if (new_y >= HEIGHT) new_y = 0;
 
-    // Eat fruit
-    if (head_x == fruit_x && head_y == fruit_y) {
-        Score += 10;
-        if (tail_length < MAX_TAIL) tail_length++;
+    if (check_collision(new_x, new_y)) {
+        system("cls");
+        printf("Game Over! Final Score: %d\n", score);
+        exit(0);
+    }
+
+    add_head(new_x, new_y);
+
+    if (new_x == fruit_x && new_y == fruit_y) {
+        score += 10;
         fruit_x = rand() % WIDTH;
         fruit_y = rand() % HEIGHT;
+    } else {
+        remove_tail();
+    }
+}
+
+void draw() {
+    for (int i = 0; i < HEIGHT + 2; i++) {
+        for (int j = 0; j < WIDTH + 2; j++) {
+            int index = i * (WIDTH + 2) + j;
+            buffer[index].Char.AsciiChar = ' ';
+            buffer[index].Attributes = FOREGROUND_GREEN;
+
+            if (i == 0 || i == HEIGHT + 1 || j == 0 || j == WIDTH + 1) {
+                buffer[index].Char.AsciiChar = '#';
+                buffer[index].Attributes = FOREGROUND_RED | FOREGROUND_INTENSITY;
+            } else if (i - 1 == fruit_y && j - 1 == fruit_x) {
+                buffer[index].Char.AsciiChar = 'F';
+                buffer[index].Attributes = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+            } else {
+                int found = 0;
+                SnakeSegment* current = head;
+                while (current) {
+                    if (i - 1 == current->y && j - 1 == current->x) {
+                        buffer[index].Char.AsciiChar = (current == head) ? 'O' : 'o';
+                        buffer[index].Attributes = FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+                        found = 1;
+                        break;
+                    }
+                    current = current->next;
+                }
+                if (!found) {
+                    buffer[index].Char.AsciiChar = ' ';
+                    buffer[index].Attributes = FOREGROUND_GREEN;
+                }
+            }
+        }
     }
 }
