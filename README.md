@@ -1,10 +1,65 @@
-**🐍 Classic Snake Game in C Project Overview**
-This is a complete, standalone implementation of the classic arcade game Snake, built using pure C.The game logic is focused on efficiency and simplicity, making it a great showcase for C programming fundamentals, including data structures, memory management, and game loop architecture. Depending on the version, it runs either in a terminal environment or utilizes the SDL library for basic graphics.
-🕹️ **FeaturesClassic Gameplay:** Eat food, grow longer, and avoid walls and your own tail.Simple C Architecture: Minimal dependencies (or only a single major library like SDL/ncurses).Cross-Platform Ready: Easily compiled and run on Windows.
-**How to Play Controls Action Key :** Move Up W or ↑ (Up Arrow)Move Down S or ↓ (Down Arrow)Move Left A or ← (Left Arrow)Move Right D or → (Right Arrow)Pause/ResumeP or Space bar Quit Q or Esc Building and Running LocallyTo run the game on your local machine, you need a C compiler (like GCC or Clang) installed.
-1.Clone the Repository git clone (https://github.com/komal05-web/Snake-Game-C.git)
-cd Snake-Game-C
-2. Compile the Game (using GCC)Use the GCC compiler to build the executable.A. For Console/Terminal Version (e.g., using ncurses or simple I/O)# Example command (adjust for your specific libraries/source files)
-gcc -o snake *.c -lncurses 
-3. Run the GameOnce compiled, execute the program:./snake
-**License :** This project is licensed under the MIT License.
+# Snake Game in C
+
+A simple console-based implementation of the classic Snake game written in pure C. This project is ideal for learning C fundamentals like loops, conditionals, arrays, manual input handling, and cross-platform compatibility without relying on C++ features like enums or classes.
+
+## Features
+- Cross-platform: Compatible with Windows, macOS, and Linux using standard C compilers.
+- Non-blocking keyboard input for responsive controls.
+- Random fruit generation with collision avoidance on borders.
+- Growing snake tail on eating fruit.
+- Score tracking and game over detection.
+- Direction lock to prevent 180° reversals.
+
+## Requirements
+- C compiler (e.g., GCC, Clang, or MSVC).
+- Standard libraries only—no external dependencies.
+- On macOS: Xcode Command Line Tools (install via `xcode-select --install`).
+- On Linux: Build essentials (e.g., `sudo apt install build-essential` on Ubuntu).
+- On Windows: Visual Studio or MinGW.
+
+## Building the Game
+1. Clone or download the repository (or save `snake.c`).
+2. Open a terminal/command prompt in the project folder.
+3. Compile the code:
+gcc snake.c -o snake
+text- On Windows, if using MinGW: Same command.
+- If using Visual Studio: Open Developer Command Prompt and run `cl snake.c`.
+
+## Running the Game
+1. In the terminal:
+./snake
+text- On Windows: `snake.exe`.
+2. The game board will appear. The snake starts in the center and is initially stopped.
+3. Use keys to move (case-insensitive):
+- `w`: Up
+- `s`: Down
+- `a`: Left
+- `d`: Right
+- `x`: Quit
+4. Eat the fruit (`*`) to grow and score 10 points each time.
+5. Avoid hitting the walls or your own tail (`o` segments; head is `O`).
+6. The game speed is fixed (adjustable in code via delay functions).
+
+## Code Structure
+- **snake.c**: The single source file with all logic.
+- `setup()`: Initializes game variables and positions.
+- `draw()`: Clears the screen and renders the board.
+- `input()`: Handles keyboard input (cross-platform).
+- `logic()`: Updates movement, checks collisions, and handles fruit eating.
+- `main()`: Sets up the game loop with delay.
+
+## Customization
+- Board size: Change `WIDTH` and `HEIGHT` defines.
+- Speed: Modify the delay in `main()` (e.g., `usleep(100000)` for 100ms on Unix; lower = faster).
+- Enhancements: Add wrap-around borders, variable speed based on score, or high-score saving with file I/O (using `fopen`/`fprintf`).
+
+## Troubleshooting
+- **No input response**: Ensure your terminal supports the input mode. On macOS/Linux, the code sets and resets terminal modes automatically.
+- **Compilation errors**: Add `-std=c99` or `-std=c11` if needed (e.g., `gcc -std=c11 snake.c -o snake`).
+- **Screen not clearing**: Verify `system("clear")` or `system("cls")` matches your OS.
+- **Fruit on snake**: Rare, but add a loop in `logic()` to regenerate if it overlaps.
+
+## License
+This project is open-source under the MIT License. Feel free to fork and modify!
+
+For questions or improvements, open an issue or pull request. Enjoy learning C! 🐍
